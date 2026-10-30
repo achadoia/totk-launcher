@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zelda TOTK PC Port</title>
+<style>
+:root{
+  --ink:#111; --paper:#f6efd6; --paper2:#eadfb8; --teal:#1fd1b0; --teal2:#0f9c82; --yellow:#ffd43b; --orange:#ff7a45; --red:#ff4d5e; --blue:#4aa8ff;
+  --sh:6px 6px 0 var(--ink); --sh2:4px 4px 0 var(--ink); --bd:3px solid var(--ink);
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:#1a2b3a url(/bg.png) center/cover no-repeat fixed;color:var(--ink);font:600 14px/1.35 "Segoe UI",system-ui,Arial,sans-serif;overflow:hidden;user-select:none}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+::-webkit-scrollbar{width:14px}::-webkit-scrollbar-thumb{background:var(--ink);border:3px solid var(--paper)}::-webkit-scrollbar-track{background:var(--paper2)}
+h1,h2,h3,.black{font-family:"Segoe UI Black","Arial Black",system-ui,sans-serif;font-weight:900;margin:0}
+
+/* top bar */
+.top{height:70px;display:flex;align-items:center;gap:16px;padding:0 20px;position:relative;z-index:5}
+.spacer{width:350px;flex:none}   /* keeps the artwork's own logo (top left) uncovered */
+.tabs{display:flex;gap:10px;margin:0 auto}
+.tabs button{padding:8px 13px;background:var(--paper);border:var(--bd);box-shadow:var(--sh2);font:900 14px "Segoe UI Black","Arial Black",sans-serif;text-transform:uppercase;letter-spacing:.6px;transition:transform .08s,box-shadow .08s}
+.tabs button:hover{transform:translate(-2px,-2px);box-shadow:6px 6px 0 var(--ink)}
+.tabs button:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--ink)}
+.tabs button.active{background:var(--teal)}
+.tabs .n{display:inline-block;min-width:20px;padding:0 5px;margin-left:7px;background:var(--ink);color:var(--paper);font-size:11px;line-height:20px;text-align:center}
+.right{display:flex;align-items:center;gap:12px}
+.status{display:flex;align-items:center;gap:8px;padding:7px 12px;background:var(--paper);border:var(--bd);box-shadow:var(--sh2);font-weight:900;font-size:12px;text-transform:uppercase;white-space:nowrap}
+.status .dot{width:12px;height:12px;border:2px solid var(--ink);background:#999}
+.status.on .dot{background:var(--teal)}
+.status.busy .dot{background:var(--yellow);animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:.2}}
+
+/* buttons */
+.bigbtn{display:inline-block;padding:12px 26px;background:var(--teal);border:var(--bd);box-shadow:var(--sh);font:900 20px "Segoe UI Black","Arial Black",sans-serif;text-transform:uppercase;letter-spacing:1px;transition:transform .08s,box-shadow .08s}
+.bigbtn:hover{transform:translate(-3px,-3px);box-shadow:9px 9px 0 var(--ink)}
+.bigbtn:active{transform:translate(4px,4px);box-shadow:2px 2px 0 var(--ink)}
+.bigbtn:disabled{background:#b9b39a;color:#6b664f;cursor:default;transform:none;box-shadow:var(--sh)}
+.bigbtn.stop{background:var(--red);color:#fff}
+.play{padding:9px 22px;font-size:16px;white-space:nowrap}
+.btn{padding:6px 12px;background:var(--paper);border:var(--bd);box-shadow:3px 3px 0 var(--ink);font-weight:900;font-size:12px;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;transition:transform .08s,box-shadow .08s}
+.btn:hover{background:var(--yellow);transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--ink)}
+.btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+.btn.danger:hover{background:var(--red);color:#fff}
+
+.busy{display:none;position:absolute;top:78px;left:50%;transform:translateX(-50%);z-index:6;padding:9px 16px;background:var(--yellow);border:var(--bd);box-shadow:var(--sh2);font-weight:900;align-items:center;gap:10px;max-width:80vw}
+.busy.show{display:flex}
+.spin{width:16px;height:16px;border:3px solid var(--ink);border-top-color:transparent;border-radius:50%;animation:rot .8s linear infinite;flex:none}
+@keyframes rot{to{transform:rotate(360deg)}}
+
+main{position:absolute;top:78px;left:0;right:0;bottom:0;overflow:hidden}
+section{display:none;position:absolute;inset:0}section.active{display:block}
+.panel{position:absolute;top:6px;left:20px;right:20px;bottom:20px;background:var(--paper);border:var(--bd);box-shadow:var(--sh);display:flex;flex-direction:column;min-height:0}
+.ptools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:12px 16px;border-bottom:var(--bd);background:var(--paper2)}
+.pbody{overflow:auto;padding:14px 16px 20px;flex:1;min-height:0}
+.search{flex:1;min-width:200px;max-width:340px;background:#fff;border:var(--bd);padding:6px 10px;display:flex;gap:8px;align-items:center}
+.search input{flex:1;background:none;border:0;outline:0;font:inherit;color:var(--ink);user-select:text}
+.hint{font-size:12px;font-weight:700;color:#5a5538}
+
+/* home */
+.hero{position:absolute;right:28px;top:10px;bottom:24px;width:360px;display:flex;flex-direction:column;gap:12px}
+.hero .title{background:var(--yellow);border:var(--bd);box-shadow:var(--sh2);padding:8px 14px;transform:rotate(1deg)}
+.hero .title h2{font-size:15px;text-transform:uppercase;letter-spacing:1px}
+.modes{display:flex;flex-direction:column;gap:10px}
+.mode{position:relative;background:var(--paper);border:var(--bd);box-shadow:var(--sh2);padding:10px 14px 10px 46px;text-align:left;transition:transform .08s,box-shadow .08s}
+.mode:hover{transform:translate(-2px,-2px);box-shadow:6px 6px 0 var(--ink)}
+.mode .r{position:absolute;left:12px;top:50%;margin-top:-11px;width:22px;height:22px;border:3px solid var(--ink);background:#fff}
+.mode.on{background:var(--teal)}
+.mode.on .r{background:var(--ink);box-shadow:inset 0 0 0 4px var(--teal)}
+.mode h3{font-size:15px;text-transform:uppercase}
+.mode p{margin:2px 0 0;font-size:12px;font-weight:700;line-height:1.25}
+.mode .tag{position:absolute;right:-8px;top:-12px;background:var(--orange);border:3px solid var(--ink);padding:1px 8px;font:900 10px "Segoe UI Black","Arial Black",sans-serif;text-transform:uppercase;transform:rotate(4deg)}
+.hero .go{margin-top:auto;text-align:center;width:100%;font-size:26px;padding:16px}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{background:var(--paper);border:var(--bd);padding:3px 10px;font-weight:900;font-size:12px;text-transform:uppercase;box-shadow:3px 3px 0 var(--ink)}
+.chip b{color:var(--teal2)}
+
+/* groups and rows */
+.gh{display:inline-block;margin:16px 0 8px;padding:3px 12px;background:var(--ink);color:var(--paper);font:900 13px "Segoe UI Black","Arial Black",sans-serif;text-transform:uppercase;letter-spacing:1.5px}
+.gh:first-child{margin-top:0}
+.gh.c-Link{background:var(--red)}.gh.c-Movimento{background:var(--blue)}.gh.c-Combate{background:var(--orange)}.gh.c-Mundo{background:var(--teal2)}
+.gh.ok{background:var(--teal2)}.gh.warn{background:var(--orange)}.gh.bad{background:var(--red)}
+.row{display:grid;grid-template-columns:minmax(160px,1fr) minmax(220px,380px) minmax(0,300px);align-items:center;gap:14px;min-height:44px;padding:6px 10px;border-bottom:2px solid var(--ink)}
+.row:hover{background:rgba(255,212,59,.35)}
+.row .lbl{font-weight:900;font-size:13px;text-transform:uppercase;letter-spacing:.3px;min-width:0}
+.row .lbl small{display:block;font-weight:700;font-size:11px;text-transform:none;letter-spacing:0;color:#5a5538;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row.off .lbl{color:#8a845f}
+.ctl{display:flex;align-items:center;gap:8px;min-width:0}
+.keys{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.kc{display:inline-block;padding:2px 8px;background:#fff;border:2px solid var(--ink);font-weight:900;font-size:10px;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;box-shadow:2px 2px 0 var(--ink)}
+.kc.key{background:var(--yellow)}
+.kc.hold{background:var(--teal)}
+.kc.menu{box-shadow:none;border-style:dashed;background:transparent;color:#5a5538}
+
+.tg{position:relative;width:70px;height:28px;flex:none;background:#cfc79d;border:var(--bd);box-shadow:3px 3px 0 var(--ink);cursor:pointer;font:900 11px/22px "Segoe UI Black","Arial Black",sans-serif;transition:transform .08s,box-shadow .08s}
+.tg::after{content:"";position:absolute;top:2px;left:2px;width:20px;height:20px;background:var(--ink);transition:.12s}
+.tg i{position:absolute;right:8px;font-style:normal}
+.tg.on{background:var(--teal)}
+.tg.on::after{left:42px}
+.tg.on i{right:auto;left:8px}
+.tg:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+.tg.dis{opacity:.4;cursor:not-allowed}
+.seg{display:flex;border:var(--bd);background:#fff;max-width:100%;overflow:hidden;box-shadow:3px 3px 0 var(--ink)}
+.seg button{padding:3px 9px;font-weight:900;font-size:10px;text-transform:uppercase;white-space:nowrap;border-right:2px solid var(--ink)}
+.seg button:last-child{border-right:0}
+.seg button:hover{background:var(--yellow)}
+.seg button.on{background:var(--teal)}
+.oneshot{padding:4px 14px;background:var(--yellow);border:var(--bd);box-shadow:3px 3px 0 var(--ink);font-weight:900;font-size:11px}
+.oneshot:hover{background:var(--orange)}
+.oneshot:disabled{opacity:.4;cursor:not-allowed}
+.mod .lbl{text-transform:none;font-size:14px}
+.mod .st{display:block;font-weight:700;font-size:11px;color:#8a5a00}
+.mod.bad .st{color:#b0182a}
+.meta{display:flex;gap:5px}
+.conf{margin:0 0 14px;padding:10px 14px;background:#ffd0d4;border:var(--bd);box-shadow:var(--sh2)}
+.conf details{margin-top:6px;font-size:12px}
+.conf li{margin:2px 0}
+.empty{padding:30px;text-align:center;border:3px dashed var(--ink)}
+.order{margin:0 0 12px;font-size:12px;font-weight:700;color:#5a5538}
+code{background:#fff;border:2px solid var(--ink);padding:0 5px;font:700 12px Consolas,monospace;user-select:text}
+
+/* tutorial */
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:16px}
+.step{position:relative;background:#fff;border:var(--bd);box-shadow:var(--sh2);padding:16px 16px 14px 62px}
+.step .num{position:absolute;left:-3px;top:-3px;bottom:-3px;width:46px;background:var(--yellow);border:var(--bd);display:grid;place-items:start center;padding-top:10px;font:900 22px "Segoe UI Black","Arial Black",sans-serif}
+.step:nth-child(2n) .num{background:var(--teal)}.step:nth-child(3n) .num{background:var(--orange)}
+.step h3{font-size:15px;text-transform:uppercase;margin-bottom:6px}
+.step p,.step li{font-size:13px;font-weight:600;line-height:1.45;margin:4px 0}
+.step ul{margin:6px 0 0;padding-left:18px}
+.big-f1{display:inline-block;padding:0 10px;margin-right:8px;background:var(--yellow);border:var(--bd);box-shadow:3px 3px 0 var(--ink);font:900 16px/26px "Segoe UI Black","Arial Black",sans-serif;vertical-align:middle}
+.kbd{display:inline-block;padding:0 7px;background:var(--yellow);border:2px solid var(--ink);box-shadow:2px 2px 0 var(--ink);font:900 12px/18px "Segoe UI Black","Arial Black",sans-serif}
+pre.keys-txt{margin:14px 0 0;padding:12px 14px;background:var(--ink);color:#e9f7ee;border:var(--bd);box-shadow:var(--sh2);font:12px/1.5 Consolas,monospace;overflow:auto;user-select:text;white-space:pre-wrap}
+
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:20}
+.modal.show{display:flex}
+.modal .box{width:min(900px,92vw);max-height:84vh;background:var(--paper);border:var(--bd);box-shadow:10px 10px 0 var(--ink);display:flex;flex-direction:column}
+.modal .hd{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:var(--bd);background:var(--yellow);font:900 15px "Segoe UI Black","Arial Black",sans-serif;text-transform:uppercase}
+.modal pre{margin:0;padding:14px 16px;overflow:auto;font:12px/1.45 Consolas,monospace;user-select:text;white-space:pre-wrap}
+.toasts{position:fixed;right:22px;bottom:22px;display:flex;flex-direction:column;gap:10px;z-index:30;pointer-events:none}
+.toast{padding:10px 14px;background:var(--paper);border:var(--bd);box-shadow:var(--sh2);border-left:12px solid var(--blue);font-weight:800;font-size:12px;max-width:420px;animation:in .15s}
+.toast.ok{border-left-color:var(--teal)}.toast.warn{border-left-color:var(--yellow)}.toast.error{border-left-color:var(--red)}
+@keyframes in{from{transform:translateY(10px);opacity:0}}
+.offline{position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;z-index:40;font:900 20px "Segoe UI Black","Arial Black",sans-serif;color:var(--paper)}
+.offline.show{display:flex}
+@media (max-width:1000px){.row{grid-template-columns:1fr auto}.keys{display:none}.hero{width:300px}.spacer{display:none}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="spacer"></div>
+  <nav class="tabs">
+    <button data-tab="home">Jogar</button>
+    <button data-tab="mods">Mods<span class="n" id="nmods">0</span></button>
+    <button data-tab="trainer">Cheats<span class="n" id="ncheats">0</span></button>
+    <button data-tab="tutorial">Tutorial</button>
+  </nav>
+  <div class="right">
+    <div class="status" id="status"><span class="dot"></span><span id="stext">Jogo fechado</span></div>
+    <button class="bigbtn play" id="play">Jogar</button>
+  </div>
+</header>
+<div class="busy" id="busy"><span class="spin"></span><span id="btext"></span></div>
+
+<main>
+  <section id="tab-home">
+    <div class="hero">
+      <div class="title"><h2>Escolha como jogar</h2></div>
+      <div class="modes" id="modes"></div>
+      <div class="chips" id="homechips"></div>
+      <button class="bigbtn go" id="go">Jogar!</button>
+    </div>
+  </section>
+
+  <section id="tab-mods">
+    <div class="panel">
+      <div class="ptools">
+        <div class="search">&#128269;<input id="q" placeholder="Procurar mod..."></div>
+        <button class="btn" data-act="open_mods">Abrir pasta de mods</button>
+        <button class="btn" data-act="rescan">Reler mods</button>
+        <span class="hint" id="modinfo"></span>
+      </div>
+      <div class="pbody"><div id="conf"></div><div id="mods"></div></div>
+    </div>
+  </section>
+
+  <section id="tab-trainer">
+    <div class="panel">
+      <div class="ptools">
+        <span class="hint" style="flex:1">Com o jogo fechado, o que estiver ligado entra junto com o jogo. Com o jogo aberto, vale na hora. Tudo fica salvo para a pr&oacute;xima vez.</span>
+        <button class="btn" data-tab-go="tutorial">Como usar (F1)</button>
+        <button class="btn danger" data-act="reset_cheats">Desligar tudo</button>
+      </div>
+      <div class="pbody"><div id="cheats"></div></div>
+    </div>
+  </section>
+
+  <section id="tab-tutorial">
+    <div class="panel">
+      <div class="ptools"><h2 style="font-size:16px;text-transform:uppercase">Tutorial r&aacute;pido</h2>
+        <span class="hint">Tudo que voc&ecirc; precisa saber para jogar com mods e cheats.</span></div>
+      <div class="pbody">
+        <div class="steps">
+          <div class="step"><span class="num">1</span><h3>Abrir o jogo</h3>
+            <p>Na aba <b>Jogar</b>, escolha o modo e clique em <b>Jogar!</b>. Os <b>mods</b> e os <b>cheats</b> marcados entram junto, na abertura.</p>
+            <p>Para trocar mods, feche o jogo, mude aqui e abra de novo.</p></div>
+          <div class="step"><span class="num">2</span><h3><span class="big-f1">F1</span> Menu de cheats</h3>
+            <p>Dentro do jogo, aperte <span class="kbd">F1</span> para abrir o menu do trainer. <b>F1</b> ou <b>Esc</b> fecha.</p>
+            <ul><li><b>&uarr; &darr;</b> escolhe o cheat, <b>&larr; &rarr;</b> muda o valor, <b>Enter</b> liga/desliga.</li>
+            <li>No controle: <b>+ e &minus; juntos</b> abrem e fecham; direcional move, <b>A</b> liga, <b>B</b> fecha.</li>
+            <li>Com o menu aberto o jogo n&atilde;o recebe nenhum comando.</li></ul></div>
+          <div class="step"><span class="num">3</span><h3>Atalhos de teclado</h3>
+            <p>Os cheats principais t&ecirc;m atalho direto, sem abrir o menu: <b>Numpad 1</b> vida, <b>2</b> stamina, <b>3</b> bateria&hellip; A lista completa est&aacute; abaixo e tamb&eacute;m ao lado de cada cheat, na aba Cheats.</p>
+            <p>Cheats de &ldquo;segurar&rdquo; (planador, velocidade, Moon Jump) s&oacute; agem enquanto voc&ecirc; segura <b>A</b>, <b>B</b> ou <b>X</b>.</p></div>
+          <div class="step"><span class="num">4</span><h3>Cheats ficam salvos</h3>
+            <p>O que voc&ecirc; liga ou desliga, aqui ou no <b>F1</b>, fica gravado e j&aacute; vem ligado na pr&oacute;xima abertura. N&atilde;o mexe no seu save.</p>
+            <p>Para zerar tudo: aba Cheats &rarr; <b>Desligar tudo</b>.</p></div>
+          <div class="step"><span class="num">5</span><h3>Modos de jogo</h3>
+            <ul><li><b>30 fps original</b>: como no Switch. Use se algo der errado.</li>
+            <li><b>60 fps din&acirc;mico</b>: o mais leve, cena em 1600&times;900.</li>
+            <li><b>60 fps 1080p</b>: mais n&iacute;tido, usa mais mem&oacute;ria.</li>
+            <li><b>60 fps 1440p</b>: o mais bonito. Na primeira vez o launcher prepara a mem&oacute;ria extra sozinho.</li></ul></div>
+          <div class="step"><span class="num">6</span><h3>Mods e dicas</h3>
+            <ul><li>Mods com aviso (amarelo) podem dar problema; os vermelhos n&atilde;o funcionam na vers&atilde;o 1.4.3.</li>
+            <li>Pack de texturas 4K: na primeira abertura o launcher converte tudo (v&aacute;rios minutos, s&oacute; uma vez).</li>
+            <li><b>F11</b> alterna tela cheia.</li>
+            <li>Jogo fechou sozinho? Veja o log em <code>D:\zelda\ultratears-run.log</code> e tente o modo 1080p ou 60 fps din&acirc;mico.</li></ul></div>
+        </div>
+        <pre class="keys-txt" id="keystxt">Carregando atalhos...</pre>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="modal" id="modal"><div class="box"><div class="hd"><span id="mtitle"></span><button class="btn" id="mclose">Fechar</button></div><pre id="mbody"></pre></div></div>
+<div class="toasts" id="toasts"></div>
+<div class="offline" id="offline">O launcher fechou. Pode fechar esta janela.</div>
+
+<script>
+const TOKEN = location.hash.slice(1);
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let S = null, lastEvent = -1, sigMods = '', sigCheats = '', sigModes = '', tab = 'home', fails = 0;
+try { tab = localStorage.getItem('tab') || 'home'; } catch (e) {}
+tab = new URLSearchParams(location.search).get('tab') || tab;
+if (!['home', 'mods', 'trainer', 'tutorial'].includes(tab)) tab = 'home';
+
+function showTab(t) {
+  tab = t;
+  try { localStorage.setItem('tab', t); } catch (e) {}
+  document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('active', b.dataset.tab === t));
+  document.querySelectorAll('main section').forEach(s => s.classList.toggle('active', s.id === 'tab-' + t));
+}
+document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => showTab(b.dataset.tab));
+showTab(tab);
+fetch('/api/keys').then(r => r.json()).then(r => { $('#keystxt').textContent = r.text; }).catch(() => { $('#keystxt').textContent = ''; });
+
+async function api(path, body) {
+  try {
+    const r = await fetch(path, {method: 'POST', headers: {'Content-Type': 'application/json', 'X-Token': TOKEN}, body: JSON.stringify(body || {})});
+    const s = await r.json();
+    if (s.error) toast(s.error, 'error');
+    if (s.mods) apply(s);
+    return s;
+  } catch (e) { toast('Sem resposta do launcher', 'error'); }
+}
+async function poll() {
+  try {
+    const r = await fetch('/api/state');
+    apply(await r.json());
+    fails = 0; $('#offline').classList.remove('show');
+  } catch (e) {
+    if (++fails > 4) $('#offline').classList.add('show');
+  }
+}
+setInterval(poll, 600);
+poll();
+
+function toast(text, kind) {
+  const d = document.createElement('div');
+  d.className = 'toast ' + (kind || 'info');
+  d.textContent = text;
+  $('#toasts').appendChild(d);
+  setTimeout(() => d.remove(), kind === 'error' ? 7000 : 4000);
+}
+
+function apply(s) {
+  S = s;
+  const st = $('#status'), g = s.game;
+  st.className = 'status' + (g.alive ? ' on' : g.running || s.busy ? ' busy' : '');
+  $('#stext').textContent = g.alive ? ('Jogo aberto' + (g.fps ? ' \u00b7 ' + g.fps + ' fps' : '') + (g.menu_open ? ' \u00b7 menu F1' : ''))
+                           : g.running ? 'Jogo abrindo...' : 'Jogo fechado';
+  const open = g.running || g.alive;
+  for (const b of [$('#play'), $('#go')]) {
+    b.textContent = open ? 'Fechar jogo' : (b.id === 'go' ? 'Jogar!' : 'Jogar');
+    b.classList.toggle('stop', open);
+    b.disabled = !open && !!s.busy;
+  }
+  $('#busy').classList.toggle('show', !!s.busy);
+  $('#btext').textContent = s.busy || '';
+  const nm = s.mods.filter(m => m.on && m.usable).length, nc = s.cheats.filter(c => c.k && !c.oneshot).length;
+  $('#nmods').textContent = nm;
+  $('#ncheats').textContent = nc;
+  $('#homechips').innerHTML = `<span class="chip">Mods: <b>${nm}</b></span><span class="chip">Cheats: <b>${nc}</b></span><span class="chip">F1 = menu no jogo</span>`;
+  for (const [n, text, kind] of s.events) {
+    if (lastEvent < 0) lastEvent = n; else if (n > lastEvent) { lastEvent = n; toast(text, kind); }
+  }
+  if (lastEvent < 0) lastEvent = 0;
+  const sm = JSON.stringify([s.mods, s.conflicts, s.nconflicts, s.skipped]);
+  if (sm !== sigMods) { sigMods = sm; renderMods(); }
+  const sc = JSON.stringify([s.cheats.map(c => c.k), g.alive]);
+  if (sc !== sigCheats) { sigCheats = sc; renderCheats(); }
+  const so = JSON.stringify([s.mode, s.modes.length]);
+  if (so !== sigModes) { sigModes = so; renderModes(); }
+}
+
+function toggleHtml(on, dis) { return `<div class="tg${on ? ' on' : ''}${dis ? ' dis' : ''}"><i>${on ? 'ON' : 'OFF'}</i></div>`; }
+
+function renderModes() {
+  const rec = S.modes.length;   // the last mode (1440p) is the recommended one
+  $('#modes').innerHTML = S.modes.map((m, i) => `<button class="mode ${S.mode === i + 1 ? 'on' : ''}" data-mode="${i + 1}"><span class="r"></span>${i + 1 === rec ? '<span class="tag">Recomendado</span>' : ''}<h3>${esc(m.name)}</h3><p>${esc(m.desc)}</p></button>`).join('');
+}
+
+function renderCheats() {
+  const cats = [];
+  for (const c of S.cheats) if (!cats.includes(c.cat)) cats.push(c.cat);
+  let h = '';
+  for (const cat of cats) {
+    h += `<div><span class="gh c-${esc(cat)}">${esc(cat)}</span>`;
+    for (const c of S.cheats.filter(c => c.cat === cat)) {
+      const on = c.k > 0;
+      let ctl, keys = '';
+      if (c.oneshot) {
+        ctl = `<button class="oneshot" data-shot="${c.name}" ${S.game.alive ? '' : 'disabled title="So com o jogo aberto"'}>APLICAR</button>`;
+        keys = `<span class="kc">Aplicar</span>`;
+      } else if (c.values) {
+        ctl = `<div class="seg" data-name="${c.name}">` + c.values.map((v, i) => `<button class="${i === c.k ? 'on' : ''}" data-k="${i}">${esc(v)}</button>`).join('') + `</div>`;
+        keys = `<span class="kc">Ciclar</span>`;
+      } else {
+        ctl = `<div data-name="${c.name}" data-k="${on ? 0 : 1}">${toggleHtml(on)}</div>`;
+        keys = `<span class="kc">Liga/desliga</span>`;
+      }
+      if (c.key) keys += `<span class="kc key">${esc(c.key)}</span>`; else keys = `<span class="kc menu">S\u00f3 pelo menu F1</span>`;
+      if (c.hold) keys += `<span class="kc hold">Segure ${c.hold}</span>`;
+      h += `<div class="row ${on ? 'on' : ''}"><div class="lbl">${esc(c.label)}${c.hint ? `<small>${esc(c.hint)}</small>` : ''}</div><div class="ctl">${ctl}</div><div class="keys">${keys}</div></div>`;
+    }
+    h += '</div>';
+  }
+  $('#cheats').innerHTML = h;
+}
+
+function modGroup(m) { return !m.usable ? 'bad' : m.status === 'OK' ? 'ok' : 'warn'; }
+function renderMods() {
+  const q = ($('#q').value || '').toLowerCase();
+  const mods = S.mods.filter(m => !q || m.name.toLowerCase().includes(q));
+  $('#modinfo').textContent = `${S.mods.filter(m => m.usable).length} mods prontos de ${S.mods.length}`;
+  let conf = '';
+  if (S.nconflicts) {
+    conf = `<div class="conf"><b>${S.nconflicts} arquivo(s) em conflito</b> entre mods ligados: quando dois mods trazem o mesmo arquivo, vale o que est\u00e1 <b>mais abaixo</b> na lista.
+      <details><summary>Ver arquivos</summary><ul>` + S.conflicts.map(c => `<li><code>${esc(c.file)}</code> \u2014 ${esc(c.mods.join(' / '))}</li>`).join('') +
+      (S.nconflicts > S.conflicts.length ? `<li>... e mais ${S.nconflicts - S.conflicts.length}</li>` : '') + `</ul></details></div>`;
+  }
+  $('#conf').innerHTML = conf;
+  if (!S.mods.length) {
+    $('#mods').innerHTML = `<div class="empty">Nenhum mod em <b>${esc(S.tools.mods_dir)}</b>.<br>Coloque os arquivos .zip / .rar / .7z do Nexus l\u00e1 e clique em "Reler mods".</div>`;
+    return;
+  }
+  const groups = [['ok', 'Prontos'], ['warn', 'Com aviso'], ['bad', 'Incompat\u00edveis']];
+  let h = '<div class="order">Ordem = prioridade: em conflito, o mod mais abaixo vence. Mods s\u00f3 entram quando o jogo abre pelo launcher.</div>';
+  for (const [g, title] of groups) {
+    const list = mods.filter(m => modGroup(m) === g);
+    if (!list.length) continue;
+    h += `<div><span class="gh ${g}">${title}</span>`;
+    for (const m of list) {
+      const st = m.status === 'OK' ? '' : `<span class="st">${esc(m.status)}</span>`;
+      h += `<div class="row mod ${g} ${m.on ? 'on' : m.usable ? '' : 'off'}" data-key="${esc(m.key)}" data-on="${m.on ? 0 : 1}">
+        <div class="lbl">${esc(m.name)}${st}</div>
+        <div class="ctl">${m.usable ? toggleHtml(m.on) : toggleHtml(false, true)}</div>
+        <div class="meta">${m.kind === 'texture' ? '<span class="kc hold">Texturas</span>' : ''}<span class="kc">${m.files} arquivos</span></div></div>`;
+    }
+    h += '</div>';
+  }
+  $('#mods').innerHTML = h;
+}
+
+document.addEventListener('click', async e => {
+  const t = e.target;
+  const go = t.closest('[data-tab-go]');
+  if (go) { showTab(go.dataset.tabGo); return; }
+  const act = t.closest('[data-act]');
+  if (act) {
+    const a = act.dataset.act;
+    if (a === 'log') { const r = await (await fetch('/api/log')).json(); modal('Fim do log do jogo', r.log); setTimeout(() => { const p = $('#mbody'); p.scrollTop = p.scrollHeight; }, 0); }
+    else if (a === 'reset_cheats') api('/api/cheats/reset');
+    else api('/api/' + a);
+    return;
+  }
+  const shot = t.closest('[data-shot]');
+  if (shot) { api('/api/cheat', {name: shot.dataset.shot, k: 1}); return; }
+  const seg = t.closest('.seg');
+  if (seg && t.dataset.k !== undefined) { api('/api/cheat', {name: seg.dataset.name, k: +t.dataset.k}); return; }
+  const tg = t.closest('.tg');
+  if (tg) {
+    const c = tg.closest('[data-name]');
+    if (c) { api('/api/cheat', {name: c.dataset.name, k: +c.dataset.k}); return; }
+    const m = tg.closest('[data-key]');
+    if (m && !tg.classList.contains('dis')) { api('/api/mod', {key: m.dataset.key, on: m.dataset.on === '1'}); return; }
+    return;
+  }
+  const row = t.closest('.row.mod');
+  if (row && row.querySelector('.tg:not(.dis)')) { api('/api/mod', {key: row.dataset.key, on: row.dataset.on === '1'}); return; }
+  const card = t.closest('[data-mode]');
+  if (card) { api('/api/mode', {mode: +card.dataset.mode}); return; }
+});
+function playClick() {
+  if (S && (S.game.running || S.game.alive)) { if (confirm('Fechar o jogo agora? O que nao foi salvo se perde.')) api('/api/stop'); }
+  else api('/api/play');
+}
+$('#play').onclick = playClick;
+$('#go').onclick = playClick;
+$('#q').oninput = () => renderMods();
+function modal(title, body) { $('#mtitle').textContent = title; $('#mbody').textContent = body; $('#modal').classList.add('show'); }
+$('#mclose').onclick = () => $('#modal').classList.remove('show');
+$('#modal').onclick = e => { if (e.target === $('#modal')) $('#modal').classList.remove('show'); };
+document.addEventListener('keydown', e => { if (e.key === 'Escape') $('#modal').classList.remove('show'); });
+</script>
+</body>
+</html>

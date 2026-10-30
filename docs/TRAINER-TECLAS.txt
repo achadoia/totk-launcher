@@ -1,0 +1,37 @@
+UltraTears - Trainer embutido (cheats da lista MyNXCheats 1.4.3, os mesmos do NX Optimizer)
+=========================================================================================
+
+MENU NO JOGO: F1 abre e fecha (no controle: + e - juntos). Setas ou direcional movem e mudam o valor, Enter ou A
+liga/desliga, Esc ou B fecha. Enquanto o menu esta aberto o jogo nao recebe comandos.
+
+PELO LAUNCHER (LAUNCHER.bat, aba Trainer): cada cheat tem um botao liga/desliga estilo WeMod, com o jogo aberto ou
+fechado; o que o launcher liga vale na hora, e o que voce aperta no jogo aparece la.
+
+Funciona em qualquer JOGAR-*.bat e no LAUNCHER (desligar: set TOTK_TRAINER=0). As teclas abaixo sao atalhos diretos,
+sem abrir o menu; o estado aparece na barra de titulo ("cheats: HP STA DMG(x4) ...") e no log. Nada e gravado no
+save: ao fechar, tudo volta.
+
+TECLADO NUMERICO (NumLock ligado)
+  1  Vida infinita               6  Zonai infinitos (+ sem acabar)      +  Dano x1 / x2 / x4 / x10 / x30
+  2  Stamina (off / on / missao  7  Comida infinita (+ buff sem fim)    -  Velocidade x1/x2/x3/x10 (segurando B)
+     da Master Sword)            8  Itens x999 ao pegar                 *  Planador x1/1.5/2/3/3.8 (segurando A)
+  3  Bateria infinita            9  Compras de graca                    /  Tempo: normal / parado / avancar /
+  4  Durabilidade infinita       0  Modo furtivo (stealth)                 voltar / dias 2x / 3x / 4x
+  5  Flechas infinitas                                                   .  +60 s no cronometro de missao
+                                                                      Enter  Moon Jump (segurando X)
+TECLAS F
+  F1  abre/fecha o MENU (lua de sangue e amiibo so pelo menu)   F6  Habilidades dos sabios sem recarga
+  F2  Mapa: mostra tudo (santuarios, cavernas, koroks com      F7  Carga rapida de arma e arco, tiro rapido
+      zoom, torres, lagrimas, estatuas, fadas, templos...)     F8  Mergulho forte + pulo alto
+  F3  Ignorar gloom                                            F9  Correr por padrao
+  F4  Termometro perfeito (sem fogo, calor, frio)              F10 Sem neblina
+  F5  Stamina do cavalo infinita                               F12 Sem limite de 21 dispositivos Zonai
+  (F11 continua sendo tela cheia)
+
+LIGAR JA NA ABERTURA (no .bat, antes do UltraTears.exe):
+  set TOTK_CHEATS=health,stamina,durability,damage=2,glider=3
+  nomes: health stamina battery horse stealth thermo gloom skills charge damage move jump run items shop
+         durability arrows zonai food amiibo map nolimit time fog bloodmoon glider moonjump   (=k escolhe o nivel)
+
+OBS: "segurando A/B/X" sao os botoes do CONTROLE (no teclado: J = A, K/Espaco = B, I = X).
+     Faca backup do save antes de usar itens x999 / comida infinita (userdata\save).
